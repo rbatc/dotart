@@ -1,7 +1,7 @@
-function init(pattern, colourful) {
+function init(pattern, colourful, delay, circle, rotate) {
 	//Coordinates assume center of canvas is 0,0
 	// top left is -250, 250
-	let numballs = 200;
+	let numballs = 100;
 
 	//create a ball
 	const canvas = document.getElementById("myCanvas");
@@ -13,22 +13,13 @@ function init(pattern, colourful) {
 	for (var j=0; j<numballs; j++) {
 		let colour = colourful ? makecolour(j, numballs):'black';
 		//colour = makecolour(j, numballs);
-		switch (pattern) {
-			case 1:
-				delay = 0;
-				break;
-			case 2:
-				delay = 0;
-				break;
-			case 3:
-				delay = 0;//j*400/numballs;
-				break;
-			default:
-				delay = 0;
-		}
-		//balls.push(new ball(-200+8*j, -100+5*j, 5, 0, 0, colour, ctx));
-		theta = 2*Math.PI/numballs * j;
-		balls.push(new ball(r*Math.cos(theta), r*Math.sin(theta), 5, 0, 0, colour, ctx, pattern, delay));
+		//balls.push(new ball(-250 + j*500/numballs, -100+j*500/numballs, 5, 0, 0, colour, ctx, pattern, delay));
+		let theta = 2*Math.PI/numballs * j;
+		let x = circle ? r*Math.cos(theta):0;
+		let y = circle ? r*Math.sin(theta):0;
+		let velx = rotate ? -r*Math.sin(theta)/50 - x/100 : 0;
+		let vely = rotate ? r*Math.cos(theta)/50 - y/100 : 0;
+		balls.push(new ball(x, y, 5, velx, vely, colour, pattern, delay*j*100/numballs, ctx));
 	}
 	return balls;
 }
@@ -103,12 +94,11 @@ function update() {
 	for (let i=0; i<balls.length; i++) {
 		ball = balls[i];
 		ball.wakecount += 1;
-		/*
-		if (ball.wakecount%300 == 0) {
-			ball.pattern +=1;
-			ball.pattern = ball.pattern%4;
+		if (ball.wakecount % 250 == 0) {
+		    ball.velx = 0;
+		    ball.vely = 0;
+			ball.pattern += 1;
 		}
-		*/
 
 		//update velocity and positions
 		if (ball.wakecount > ball.delay) {
@@ -123,7 +113,7 @@ function update() {
 }
 
 
-function ball(x,y,r,vx,vy,colour,ctx,pattern,delay) {
+function ball(x,y,r,vx,vy,colour,pattern,delay,ctx) {
 	this.x = x;
 	this.y = y;
 	this.r = r;
@@ -141,32 +131,35 @@ function ball(x,y,r,vx,vy,colour,ctx,pattern,delay) {
 		this.ctx.fill();
 	}
 	this.update = function(timestep) {
+	    let distance = Math.sqrt(this.x**2 + this.y**2);
+	    let g = 0.005;
+	    let scalefactor = Math.sqrt(g/distance);
 		switch (this.pattern) {
 			case 0:
-				this.velx += -1/40000*(this.x * Math.abs(this.y));
-				this.vely += -1/40000*(this.y * Math.abs(this.x));
+			    //basic gravity in both directions, keeps getting bigger for some reason?
+			    this.velx -= this.x * scalefactor;
+			    this.vely -= this.y * scalefactor;
 				break;
 			case 1:
-				this.velx += -1/40000*(this.x * Math.abs(this.y));
-				this.vely += -1/40000*(this.y * Math.abs(this.x));
-				break;
-				/*
-				this.velx += this.x>0 ? -0.1:0.1;
-				this.vely += this.y>0 ? -0.1:0.1;
-				break;
-				*/
+			//basic gravity in horizontal direction, keeps getting bigger for some reason?
+                this.velx -= this.x * scalefactor;
+                //this.vely -= this.y * scalefactor;
+                break;
 			case 2:
-				//also accelerate towards center;
-				this.velx += -this.x/200;
-				this.vely += -this.y/200;
-				break;
-			case 3:
-				//just rotation
-				this.velx = -this.y/100;
-				this.vely = this.x/100;
-			break;
+			//basic gravity in vertical direction, keeps getting bigger for some reason?
+                //this.velx -= this.x * scalefactor;
+                this.vely -= this.y * scalefactor;
+                break;
+            case 3:
+                //gravity with some spice
+                //this.x -= this.y/200;
+                //this.y += this.x/200;
+                this.velx += Math.abs(this.y * scalefactor) * (this.x>0?-0.5:0.5);
+                this.vely += Math.abs(this.x * scalefactor) * (this.y>0?-0.5:0.5);
+                break;
 			default:
-				this.vely -= 0.1;
+			    this.pattern = 0;
+				//this.vely -= 0.1;
 		}
 
 		//update position
@@ -176,5 +169,5 @@ function ball(x,y,r,vx,vy,colour,ctx,pattern,delay) {
 
 }
 
-balls = init(1, false);
+balls = init(3, false, 0, true, false);
 update();

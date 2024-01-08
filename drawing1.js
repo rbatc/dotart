@@ -160,8 +160,9 @@ function ball(x,y,r,vx,vy,colour,ctx,pattern,delay) {
 				break;
 			case 3:
 				//just rotation
-				this.velx = -this.y/100;
-				this.vely = this.x/100;
+				//make sure it rotates this way, or it gets a bit swastika-ish
+				this.velx = this.y/100;
+				this.vely = -this.x/100;
 			break;
 			default:
 				this.vely -= 0.1;
